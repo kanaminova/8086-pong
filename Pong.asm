@@ -4,6 +4,8 @@ STACK ENDS
 
 DATA SEGMENT PARA 'DATA'
 
+	TIME_AUX DB 0
+
 	BALL_X DW 160
 	BALL_Y DW 100
 	BALL_SIZE DW 04h
@@ -30,8 +32,19 @@ CODE SEGMENT PARA 'CODE'
 		mov BH,00h
 		mov BL,01h ;and this thingy here sends the hexadecimal number for the colour black to the BL so the int can read it later :3
 		int 10h
-	
-		call DRAW_BALL
+		
+		CHECK_TIME:
+			mov AH,2Ch
+			int 21h
+			
+			cmp DL,TIME_AUX
+			je CHECK_TIME
+			
+			mov TIME_AUX,DL
+			inc BALL_X
+			call DRAW_BALL
+			
+			jmp CHECK_TIME
 	
 		RET
 	MAIN ENDP
