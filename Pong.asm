@@ -19,6 +19,15 @@ DATA SEGMENT PARA 'DATA'
 	
 	BALL_VELOCITY_X DW 05h
 	BALL_VELOCITY_Y DW 02h
+	
+	PADDLE_LEFT_X DW 0Ah
+	PADDLE_LEFT_Y DW 0Ah
+	
+	PADDLE_RIGHT_X DW 132h
+	PADDLE_RIGHT_Y DW 0Ah
+	
+	PADDLE_WIDTH DW 04h
+	PADDLE_HEIGHT DW 19h
 
 DATA ENDS
 
@@ -52,6 +61,9 @@ CODE SEGMENT PARA 'CODE'
 			
 			call MOVE_BALL
 			call DRAW_BALL
+			
+			call DRAW_LEFT_PADDLE
+			call DRAW_RIGHT_PADDLE
 			
 			jmp CHECK_TIME
 	
@@ -156,6 +168,64 @@ CODE SEGMENT PARA 'CODE'
 		RET
 	DRAW_BALL ENDP
 
+;function for drawing the left paddle
+	DRAW_LEFT_PADDLE PROC NEAR
+	
+		mov CX,PADDLE_LEFT_X
+		mov DX,PADDLE_LEFT_Y
+		
+		DRAW_PADDLE_LEFT:
+			mov AH,0Ch
+			mov AL,0Fh
+			mov BH,00h
+			int 10h
+			
+			inc CX
+			mov AX,CX
+			sub AX,PADDLE_LEFT_X
+			cmp AX,PADDLE_WIDTH
+			jng DRAW_PADDLE_LEFT
+			
+			mov CX,PADDLE_LEFT_X
+			inc DX
+			
+			mov AX,DX
+			sub AX,PADDLE_LEFT_Y
+			cmp AX,PADDLE_HEIGHT
+			jng DRAW_PADDLE_LEFT
+	
+		RET
+	DRAW_LEFT_PADDLE ENDP
+	
+;function for drawing the right paddle
+	DRAW_RIGHT_PADDLE PROC NEAR
+		
+		mov CX,PADDLE_RIGHT_X
+		mov DX,PADDLE_RIGHT_Y
+		
+		DRAW_PADDLE_RIGHT:
+			mov AH,0Ch
+			mov AL,0Fh
+			mov BH,00h
+			int 10h
+			
+			inc CX
+			mov AX,CX
+			sub AX,PADDLE_RIGHT_X
+			cmp AX,PADDLE_WIDTH
+			jng DRAW_PADDLE_RIGHT
+			
+			mov CX,PADDLE_RIGHT_X
+			inc DX
+			
+			mov AX,DX
+			sub AX,PADDLE_RIGHT_Y
+			cmp AX,PADDLE_HEIGHT
+			jng DRAW_PADDLE_RIGHT
+			
+		RET
+	DRAW_RIGHT_PADDLE ENDP
+	
 ;end of the code
 CODE ENDS
 END
