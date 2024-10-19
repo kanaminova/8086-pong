@@ -1,0 +1,211 @@
+Microsoft (R) Macro Assembler Version 5.00                  10/19/24 02:13:12
+                                                             Page     1-1
+
+
+ 0000				STACK SEGMENT PARA STACK 
+ 0000  0040[				DB 64 DUP (' ') 
+	   20			
+			 ]	
+				
+ 0040				STACK ENDS 
+				 
+ 0000				DATA SEGMENT PARA 'DATA' 
+				 
+ 0000  0140				WINDOW_WIDTH DW 140h 
+ 0002  00C8				WINDOW_HEIGHT DW 0C8h 
+ 0004  0006				WINDOW_BOUNDS DW 6 
+				 
+ 0006  00				TIME_AUX DB 0 
+				 
+ 0007  00A0				BALL_X DW 160 
+ 0009  0064				BALL_Y DW 100 
+ 000B  0004				BALL_SIZE DW 04h 
+					 
+ 000D  0005				BALL_VELOCITY_X DW 05h 
+ 000F  0002				BALL_VELOCITY_Y DW 02h 
+				 
+ 0011				DATA ENDS 
+				 
+ 0000				CODE SEGMENT PARA 'CODE' 
+				 
+ 0000					MAIN PROC FAR 
+					ASSUME CS:CODE,DS:DATA,SS:STACK 
+ 0000  1E				push DS 
+ 0001  2B C0				sub AX,AX 
+ 0003  50				push AX 
+ 0004  B8 ---- R			mov AX,DATA 
+ 0007  8E D8				mov DS,AX 
+ 0009  58				pop AX 
+ 000A  5A				pop DX 
+						 
+ 000B  E8 0071 R			call SET_SCREEN 
+						 
+ 000E						CHECK_TIME: 
+ 000E  B4 2C						mov AH,2Ch 
+ 0010  CD 21						int 21h 
+							 
+ 0012  3A 16 0006 R					cmp DL,TIME_AUX 
+ 0016  74 F6						je CHECK_TIME 
+							 
+ 0018  88 16 0006 R					mov TIME_AUX,DL 
+						 
+ 001C  E8 0071 R					call SET_SCREEN 
+							 
+ 001F  E8 0028 R					call MOVE_BALL 
+ 0022  E8 0080 R					call DRAW_BALL 
+							 
+ 0025  EB E7						jmp CHECK_TIME 
+					 
+Microsoft (R) Macro Assembler Version 5.00                  10/19/24 02:13:12
+                                                             Page     1-2
+
+
+ 0027  CB					RET 
+ 0028					MAIN ENDP 
+					 
+ 0028					MOVE_BALL PROC NEAR 
+					 
+ 0028  A1 000D R				mov AX,BALL_VELOCITY_X 
+ 002B  01 06 0007 R				add BALL_X,AX 
+						 
+ 002F  83 3E 0007 R 00				cmp BALL_X,00h 
+ 0034  7C 31					jl NEG_VELOCITY_X 
+						 
+ 0036  A1 0000 R				mov AX,WINDOW_WIDTH 
+ 0039  2B 06 000B R				sub AX,BALL_SIZE 
+ 003D  2B 06 0004 R				sub AX,WINDOW_BOUNDS 
+ 0041  39 06 0007 R				cmp BALL_X,AX 
+ 0045  7F 20					jg NEG_VELOCITY_X 
+						 
+ 0047  A1 000F R				mov AX,BALL_VELOCITY_Y 
+ 004A  01 06 0009 R				add BALL_Y,AX 
+					 
+ 004E  83 3E 0009 R 00				cmp BALL_Y,00h 
+ 0053  7C 17					jl NEG_VELOCITY_Y 
+						 
+ 0055  A1 0002 R				mov AX,WINDOW_HEIGHT 
+ 0058  2B 06 000B R				sub AX,BALL_SIZE 
+ 005C  2B 06 0004 R				sub AX,WINDOW_BOUNDS 
+ 0060  39 06 0009 R				cmp BALL_Y,AX 
+ 0064  7F 06					jg NEG_VELOCITY_Y 
+						 
+ 0066  C3					RET 
+						 
+ 0067						NEG_VELOCITY_X: 
+ 0067  F7 1E 000D R					neg BALL_VELOCITY_X 
+ 006B  C3					ret 
+						 
+ 006C						NEG_VELOCITY_Y: 
+ 006C  F7 1E 000F R					neg BALL_VELOCITY_Y 
+ 0070  C3					ret 
+						 
+ 0071					MOVE_BALL ENDP 
+					 
+ 0071					SET_SCREEN PROC NEAR 
+ 0071  B4 00					mov AH,00h ;this thingy basical
+				ly puts 00 into the AH which basically means th
+				at now the int will now what to do 
+ 0073  B0 0D					mov AL,0Dh ;this thingy here te
+				lls the int which video mode to choose :3 
+ 0075  CD 10					int 10h 
+					 
+ 0077  B4 0B					mov AH,0Bh ;this thingy here an
+				d the BH thingy below it tell the int that we w
+				anna set a bg colour  
+ 0079  B7 00					mov BH,00h 
+ 007B  B3 01					mov BL,01h ;and this thingy her
+Microsoft (R) Macro Assembler Version 5.00                  10/19/24 02:13:12
+                                                             Page     1-3
+
+
+				e sends the hexadecimal number for the colour b
+				lack to the BL so the int can read it later :3 
+ 007D  CD 10					int 10h 
+				 
+ 007F  C3					RET 
+ 0080					SET_SCREEN ENDP 
+					 
+ 0080					DRAW_BALL PROC NEAR	 
+					 
+ 0080  8B 0E 0007 R				mov CX,BALL_X 
+ 0084  8B 16 0009 R				mov DX,BALL_Y 
+						 
+ 0088						DRAW_BALL_HORIZONTAL: 
+ 0088  B4 0C						mov AH,0Ch 
+ 008A  B0 0F						mov AL,0Fh 
+ 008C  B7 00						mov BH,00h 
+ 008E  CD 10						int 10h 
+							 
+ 0090  41						inc CX 
+ 0091  8B C1						mov AX,CX 
+ 0093  2B 06 0007 R					sub AX,BALL_X 
+ 0097  3B 06 000B R					cmp AX,BALL_SIZE 
+ 009B  7E EB						jng DRAW_BALL_HORIZONTA
+				L 
+							 
+ 009D  8B 0E 0007 R					mov CX,BALL_X 
+ 00A1  42						inc DX 
+							 
+ 00A2  8B C2						mov AX,DX 
+ 00A4  2B 06 0009 R					sub AX,BALL_Y 
+ 00A8  3B 06 000B R					cmp AX,BALL_SIZE 
+ 00AC  7E DA						jng DRAW_BALL_HORIZONTA
+				L 
+							 
+ 00AE  C3					RET 
+ 00AF					DRAW_BALL ENDP 
+				 
+ 00AF				CODE ENDS 
+				END 
+Microsoft (R) Macro Assembler Version 5.00                  10/19/24 02:13:12
+                                                             Symbols-1
+
+
+Segments and Groups:
+
+                N a m e         	Length	 Align	Combine Class
+
+CODE . . . . . . . . . . . . . .  	00AF	PARA	NONE	'CODE'
+DATA . . . . . . . . . . . . . .  	0011	PARA	NONE	'DATA'
+STACK  . . . . . . . . . . . . .  	0040	PARA	STACK	
+
+Symbols:            
+
+                N a m e         	Type	 Value	 Attr
+
+BALL_SIZE  . . . . . . . . . . .  	L WORD	000B	DATA
+BALL_VELOCITY_X  . . . . . . . .  	L WORD	000D	DATA
+BALL_VELOCITY_Y  . . . . . . . .  	L WORD	000F	DATA
+BALL_X . . . . . . . . . . . . .  	L WORD	0007	DATA
+BALL_Y . . . . . . . . . . . . .  	L WORD	0009	DATA
+
+CHECK_TIME . . . . . . . . . . .  	L NEAR	000E	CODE
+
+DRAW_BALL  . . . . . . . . . . .  	N PROC	0080	CODE	Length = 002F
+DRAW_BALL_HORIZONTAL . . . . . .  	L NEAR	0088	CODE
+
+MAIN . . . . . . . . . . . . . .  	F PROC	0000	CODE	Length = 0028
+MOVE_BALL  . . . . . . . . . . .  	N PROC	0028	CODE	Length = 0049
+
+NEG_VELOCITY_X . . . . . . . . .  	L NEAR	0067	CODE
+NEG_VELOCITY_Y . . . . . . . . .  	L NEAR	006C	CODE
+
+SET_SCREEN . . . . . . . . . . .  	N PROC	0071	CODE	Length = 000F
+
+TIME_AUX . . . . . . . . . . . .  	L BYTE	0006	DATA
+
+WINDOW_BOUNDS  . . . . . . . . .  	L WORD	0004	DATA
+WINDOW_HEIGHT  . . . . . . . . .  	L WORD	0002	DATA
+WINDOW_WIDTH . . . . . . . . . .  	L WORD	0000	DATA
+
+@FILENAME  . . . . . . . . . . .  	TEXT  PONG		
+
+
+    135 Source  Lines
+    135 Total   Lines
+     22 Symbols
+
+  51250 + 465294 Bytes symbol space free
+
+      0 Warning Errors
+      0 Severe  Errors
