@@ -2,6 +2,7 @@ STACK SEGMENT PARA STACK
 	DB 64 DUP (' ')
 STACK ENDS
 
+;data segment v
 DATA SEGMENT PARA 'DATA'
 
 	WINDOW_WIDTH DW 140h
@@ -19,8 +20,10 @@ DATA SEGMENT PARA 'DATA'
 
 DATA ENDS
 
+;code segment v
 CODE SEGMENT PARA 'CODE'
 
+;main function
 	MAIN PROC FAR
 	ASSUME CS:CODE,DS:DATA,SS:STACK
 	push DS
@@ -33,6 +36,7 @@ CODE SEGMENT PARA 'CODE'
 		
 	call SET_SCREEN
 		
+	;time check procedure
 		CHECK_TIME:
 			mov AH,2Ch
 			int 21h
@@ -52,6 +56,7 @@ CODE SEGMENT PARA 'CODE'
 		RET
 	MAIN ENDP
 	
+;function for moving the ball
 	MOVE_BALL PROC NEAR
 	
 		mov AX,BALL_VELOCITY_X
@@ -92,6 +97,7 @@ CODE SEGMENT PARA 'CODE'
 		
 	MOVE_BALL ENDP
 	
+;function for setting the video mode
 	SET_SCREEN PROC NEAR
 		mov AH,00h ;this thingy basically puts 00 into the AH which basically means that now the int will now what to do
 		mov AL,0Dh ;this thingy here tells the int which video mode to choose :3
@@ -105,6 +111,7 @@ CODE SEGMENT PARA 'CODE'
 		RET
 	SET_SCREEN ENDP
 	
+;function for drawing the ball
 	DRAW_BALL PROC NEAR	
 	
 		mov CX,BALL_X
@@ -133,5 +140,6 @@ CODE SEGMENT PARA 'CODE'
 		RET
 	DRAW_BALL ENDP
 
+;end of the code
 CODE ENDS
 END
