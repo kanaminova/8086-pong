@@ -28,6 +28,8 @@ DATA SEGMENT PARA 'DATA'
 	
 	PADDLE_WIDTH DW 04h
 	PADDLE_HEIGHT DW 19h
+	
+	PADDLE_VELOCITY_Y DW 05h
 
 DATA ENDS
 
@@ -62,6 +64,7 @@ CODE SEGMENT PARA 'CODE'
 			call MOVE_BALL
 			call DRAW_BALL
 			
+			call MOVE_PADDLES
 			call DRAW_LEFT_PADDLE
 			call DRAW_RIGHT_PADDLE
 			
@@ -124,6 +127,115 @@ CODE SEGMENT PARA 'CODE'
 		ret
 		
 	MOVE_BALL ENDP
+	
+;function for moving the paddles
+	MOVE_PADDLES PROC NEAR
+	
+			;moving the left paddle
+		
+			;input check
+			mov AH,01h
+			int 16h
+			jz CHECK_RIGHT_PADDLE_MOVEMENT
+			;check key pressed
+			mov AH,00h
+			int 16h
+			;check if 'w' or 'W' then move up
+			cmp AL,77h
+			je MOVE_LEFT_PADDLE_UP
+			cmp AL,57h
+			je MOVE_LEFT_PADDLE_UP
+			;check if 's' or 'S' then move down
+			cmp AL,73h
+			je MOVE_LEFT_PADDLE_DOWN
+			cmp AL,53h
+			je MOVE_LEFT_PADDLE_DOWN
+			jmp CHECK_RIGHT_PADDLE_MOVEMENT
+			
+			MOVE_LEFT_PADDLE_UP:
+				mov AX,PADDLE_VELOCITY_Y
+				sub PADDLE_LEFT_Y,AX
+				
+				mov AX,WINDOW_BOUNDS
+				cmp PADDLE_LEFT_Y,AX
+				jl FIX_PADDLE_LEFT_TOP_POSITION
+				jmp CHECK_RIGHT_PADDLE_MOVEMENT
+			
+				FIX_PADDLE_LEFT_TOP_POSITION:
+					mov AX,WINDOW_BOUNDS
+					mov PADDLE_LEFT_Y,AX
+					jmp CHECK_RIGHT_PADDLE_MOVEMENT
+			
+			MOVE_LEFT_PADDLE_DOWN:
+				mov AX,PADDLE_VELOCITY_Y
+				add PADDLE_LEFT_Y,AX
+			
+				mov AX,WINDOW_HEIGHT
+				sub AX,WINDOW_BOUNDS
+				sub AX,PADDLE_HEIGHT
+				cmp PADDLE_LEFT_Y,AX
+				jg FIX_PADDLE_LEFT_BTM_POSITION
+				jmp CHECK_RIGHT_PADDLE_MOVEMENT
+			
+				FIX_PADDLE_LEFT_BTM_POSITION:
+					mov PADDLE_LEFT_Y,AX
+					jmp CHECK_RIGHT_PADDLE_MOVEMENT
+			
+		;moving the right paddle
+		CHECK_RIGHT_PADDLE_MOVEMENT:
+			;moving the right paddle
+			
+			;input check
+			mov AH,01h
+			int 16h
+			jz EXIT_PADDLE_MOVEMENT
+			;check key pressed
+			mov AH,00h
+			int 16h
+			;check if 'o' or 'O' pressed then move up
+			cmp AL,6Fh
+			je MOVE_RIGHT_PADDLE_UP
+			cmp AL,4Fh
+			je MOVE_RIGHT_PADDLE_UP
+			;check if 'l' or 'L' pressed then move down
+			cmp AL,6Ch
+			je MOVE_RIGHT_PADDLE_DOWN
+			cmp AL,4Ch
+			je MOVE_RIGHT_PADDLE_DOWN
+			jmp EXIT_PADDLE_MOVEMENT
+			
+			MOVE_RIGHT_PADDLE_UP:
+				mov AX,PADDLE_VELOCITY_Y
+				sub PADDLE_RIGHT_Y,AX
+				
+				mov AX,WINDOW_BOUNDS
+				cmp PADDLE_RIGHT_Y,AX
+				jl FIX_PADDLE_RIGHT_TOP_POSITION
+				jmp EXIT_PADDLE_MOVEMENT
+				
+				FIX_PADDLE_RIGHT_TOP_POSITION:
+					mov AX,WINDOW_BOUNDS
+					mov PADDLE_RIGHT_Y,AX
+					jmp EXIT_PADDLE_MOVEMENT
+				
+			MOVE_RIGHT_PADDLE_DOWN:
+				mov AX,PADDLE_VELOCITY_Y
+				add PADDLE_RIGHT_Y,AX
+				
+				mov AX,WINDOW_HEIGHT
+				sub AX,WINDOW_BOUNDS
+				sub AX,PADDLE_HEIGHT
+				cmp PADDLE_RIGHT_Y,AX
+				jg FIX_PADDLE_RIGHT_BTM_POSITION
+				jmp EXIT_PADDLE_MOVEMENT
+				
+				FIX_PADDLE_RIGHT_BTM_POSITION:
+					mov PADDLE_RIGHT_Y,AX
+					jmp EXIT_PADDLE_MOVEMENT
+					
+		EXIT_PADDLE_MOVEMENT:
+			RET
+	MOVE_PADDLES ENDP
 	
 ;function for setting the video mode
 	SET_SCREEN PROC NEAR
