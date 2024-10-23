@@ -102,30 +102,87 @@ CODE SEGMENT PARA 'CODE'
 		sub AX,WINDOW_BOUNDS
 		cmp BALL_X,AX
 		jg RESET_POSITION
-		
-		mov AX,BALL_VELOCITY_Y
-		add BALL_Y,AX
-	
-		mov AX,WINDOW_BOUNDS
-		cmp BALL_Y,AX
-		jl NEG_VELOCITY_Y
-		
-		mov AX,WINDOW_HEIGHT
-		sub AX,BALL_SIZE
-		sub AX,WINDOW_BOUNDS
-		cmp BALL_Y,AX
-		jg NEG_VELOCITY_Y
-		
-		RET
+		jmp MOVE_BALL_VERTICALLY
 		
 		RESET_POSITION:
 			call RESET_BALL_POSITION
 		ret
 		
+		MOVE_BALL_VERTICALLY:
+			mov AX,BALL_VELOCITY_Y
+			add BALL_Y,AX
+
+;check if ball passed top
+		mov AX,WINDOW_BOUNDS
+		cmp BALL_Y,AX
+		jl NEG_VELOCITY_Y
+		
+;check if ball passed bottom		
+		mov AX,WINDOW_HEIGHT
+		sub AX,BALL_SIZE
+		sub AX,WINDOW_BOUNDS
+		cmp BALL_Y,AX
+		jg NEG_VELOCITY_Y
+		jmp CHECK_COLLISION_WITH_RIGHT_PADDLE
+		
 		NEG_VELOCITY_Y:
 			neg BALL_VELOCITY_Y
 		ret
 		
+;check for right paddle collision
+		CHECK_COLLISION_WITH_RIGHT_PADDLE:
+		mov AX,BALL_X
+		add AX,BALL_SIZE
+		cmp AX,PADDLE_RIGHT_X
+		jng CHECK_COLLISION_WITH_LEFT_PADDLE ;if no collision, check for the left paddle
+		
+		mov AX,PADDLE_RIGHT_X
+		add AX,PADDLE_WIDTH
+		cmp BALL_X,AX
+		jnl CHECK_COLLISION_WITH_LEFT_PADDLE
+		
+		mov AX,BALL_Y
+		add AX,BALL_SIZE
+		cmp AX,PADDLE_RIGHT_Y
+		jng CHECK_COLLISION_WITH_LEFT_PADDLE
+		
+		mov AX,PADDLE_RIGHT_Y
+		add AX,PADDLE_HEIGHT
+		cmp BALL_Y,AX
+		jnl CHECK_COLLISION_WITH_LEFT_PADDLE
+		
+		neg BALL_VELOCITY_X
+		RET
+		
+		
+;check for left paddle collision
+		CHECK_COLLISION_WITH_LEFT_PADDLE:
+		mov AX,BALL_X
+		add AX,BALL_SIZE
+		cmp AX,PADDLE_LEFT_X
+		jng EXIT_COLLISION_CHECK
+		
+		mov AX,PADDLE_LEFT_X
+		add AX,PADDLE_WIDTH
+		cmp BALL_X,AX
+		jnl EXIT_COLLISION_CHECK
+		
+		mov AX,BALL_Y
+		add AX,BALL_SIZE
+		cmp AX,PADDLE_LEFT_Y
+		jng EXIT_COLLISION_CHECK
+		
+		mov AX,PADDLE_LEFT_Y
+		add AX,PADDLE_HEIGHT
+		cmp BALL_Y,AX
+		jnl EXIT_COLLISION_CHECK
+		
+		neg BALL_VELOCITY_X
+		RET
+
+		
+		EXIT_COLLISION_CHECK:
+			RET
 	MOVE_BALL ENDP
 	
 ;function for moving the paddles
