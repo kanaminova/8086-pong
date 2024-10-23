@@ -27,7 +27,7 @@ DATA SEGMENT PARA 'DATA'
 	PADDLE_RIGHT_Y DW 0Ah
 	
 	PADDLE_WIDTH DW 04h
-	PADDLE_HEIGHT DW 19h
+	PADDLE_HEIGHT DW 1Eh
 	
 	PADDLE_VELOCITY_Y DW 05h
 
@@ -37,7 +37,7 @@ DATA ENDS
 CODE SEGMENT PARA 'CODE'
 
 ;main function
-	MAIN PROC FAR
+	MAIN PROC FAR										;MAIN FUNCTION AND CLOCK
 	ASSUME CS:CODE,DS:DATA,SS:STACK
 	push DS
 	sub AX,AX
@@ -51,6 +51,7 @@ CODE SEGMENT PARA 'CODE'
 		
 	;time check procedure
 		CHECK_TIME:
+		
 			mov AH,2Ch
 			int 21h
 			
@@ -69,12 +70,13 @@ CODE SEGMENT PARA 'CODE'
 			call DRAW_RIGHT_PADDLE
 			
 			jmp CHECK_TIME
+			
 	
 		RET
 	MAIN ENDP
 	
 ;function for reseting the ball position
-	RESET_BALL_POSITION PROC NEAR
+	RESET_BALL_POSITION PROC NEAR						;BALL POSITION RESET
 		
 			mov AX,BALL_ORIGINAL_X
 			sub AX,BALL_SIZE
@@ -88,7 +90,7 @@ CODE SEGMENT PARA 'CODE'
 	RESET_BALL_POSITION ENDP
 	
 ;function for moving the ball
-	MOVE_BALL PROC NEAR
+	MOVE_BALL PROC NEAR									;BALL MOVEMENT AND COLLISIONS
 	
 		mov AX,BALL_VELOCITY_X
 		add BALL_X,AX
@@ -186,7 +188,7 @@ CODE SEGMENT PARA 'CODE'
 	MOVE_BALL ENDP
 	
 ;function for moving the paddles
-	MOVE_PADDLES PROC NEAR
+	MOVE_PADDLES PROC NEAR								;PADDLE MOVEMENT
 	
 			;moving the left paddle
 		
@@ -295,7 +297,7 @@ CODE SEGMENT PARA 'CODE'
 	MOVE_PADDLES ENDP
 	
 ;function for setting the video mode
-	SET_SCREEN PROC NEAR
+	SET_SCREEN PROC NEAR								;SCREEN SETTINGS
 		mov AH,00h ;this thingy basically puts 00 into the AH which basically means that now the int will now what to do
 		mov AL,0Dh ;this thingy here tells the int which video mode to choose :3
 		int 10h
@@ -309,7 +311,7 @@ CODE SEGMENT PARA 'CODE'
 	SET_SCREEN ENDP
 	
 ;function for drawing the ball
-	DRAW_BALL PROC NEAR	
+	DRAW_BALL PROC NEAR									;DRAWING THE BALL
 	
 		mov CX,BALL_X
 		mov DX,BALL_Y
@@ -338,7 +340,7 @@ CODE SEGMENT PARA 'CODE'
 	DRAW_BALL ENDP
 
 ;function for drawing the left paddle
-	DRAW_LEFT_PADDLE PROC NEAR
+	DRAW_LEFT_PADDLE PROC NEAR							;DRAWING THE LEFT PADDLE
 	
 		mov CX,PADDLE_LEFT_X
 		mov DX,PADDLE_LEFT_Y
@@ -367,7 +369,7 @@ CODE SEGMENT PARA 'CODE'
 	DRAW_LEFT_PADDLE ENDP
 	
 ;function for drawing the right paddle
-	DRAW_RIGHT_PADDLE PROC NEAR
+	DRAW_RIGHT_PADDLE PROC NEAR							;DRAWING THE RIGHT PADDLE
 		
 		mov CX,PADDLE_RIGHT_X
 		mov DX,PADDLE_RIGHT_Y
@@ -397,4 +399,4 @@ CODE SEGMENT PARA 'CODE'
 	
 ;end of the code
 CODE ENDS
-END
+END														;FINITO :3
