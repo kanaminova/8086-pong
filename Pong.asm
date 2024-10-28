@@ -10,6 +10,9 @@ DATA SEGMENT PARA 'DATA'
 	WINDOW_BOUNDS DW 6
 
 	TIME_AUX DB 0
+	
+	TEXT_P1_POINTS DB '0','$'
+	TEXT_P2_POINTS DB '0','$'
 
 	BALL_ORIGINAL_X DW 0A0h
 	BALL_ORIGINAL_Y DW 64h
@@ -22,9 +25,11 @@ DATA SEGMENT PARA 'DATA'
 	
 	PADDLE_LEFT_X DW 0Ah
 	PADDLE_LEFT_Y DW 0Ah
+	P1_POINTS DB 0
 	
 	PADDLE_RIGHT_X DW 132h
 	PADDLE_RIGHT_Y DW 0Ah
+	P2_POINTS DB 0
 	
 	PADDLE_WIDTH DW 04h
 	PADDLE_HEIGHT DW 1Eh
@@ -69,11 +74,38 @@ CODE SEGMENT PARA 'CODE'
 			call DRAW_LEFT_PADDLE
 			call DRAW_RIGHT_PADDLE
 			
+			call DRAW_UI
+			
 			jmp CHECK_TIME
 			
 	
 		RET
 	MAIN ENDP
+	
+	DRAW_UI PROC NEAR									;USER INTERFACE
+	
+		mov AH,02h		;set cursor position
+		mov BH,00h 		;set page number
+		mov DH,04h 		;set row
+		mov DL,1Dh 		;set column
+		int 10h
+		
+		mov AH,09h		;write string
+		lea DX,TEXT_P2_POINTS
+		int 21h
+		
+		mov AH,02h
+		mov BH,00h
+		mov DH,04h
+		mov DL,5Ah
+		int 10h
+		
+		mov AH,09h
+		lea DX,TEXT_P1_POINTS
+		int 21h
+	
+		RET
+	DRAW_UI ENDP
 	
 ;function for reseting the ball position
 	RESET_BALL_POSITION PROC NEAR						;BALL POSITION RESET
@@ -97,19 +129,38 @@ CODE SEGMENT PARA 'CODE'
 		
 		mov AX,WINDOW_BOUNDS
 		cmp BALL_X,AX
-		jl RESET_POSITION
+		jl GIVE_POINTS_P2
 		
 		mov AX,WINDOW_WIDTH
 		sub AX,BALL_SIZE
 		sub AX,WINDOW_BOUNDS
 		cmp BALL_X,AX
-		jg RESET_POSITION
+		jg GIVE_POINTS_P1
 		jmp MOVE_BALL_VERTICALLY
 		
-		RESET_POSITION:
+		GIVE_POINTS_P1:
+			inc P1_POINTS
 			call RESET_BALL_POSITION
-		ret
+			call UPDATE_TEXT_P1_POINTS
+			cmp P1_POINTS,05h
+			jge GAME_OVER
+			RET
+			
+		GIVE_POINTS_P2:
+			inc P2_POINTS
+			call RESET_BALL_POSITION
+			call UPDATE_TEXT_P2_POINTS
+			cmp P2_POINTS,05h
+			jge GAME_OVER
+			RET
 		
+		GAME_OVER:
+			mov P1_POINTS,00h
+			mov P2_POINTS,00h
+			call UPDATE_TEXT_P1_POINTS
+			call UPDATE_TEXT_P2_POINTS
+			RET
+			
 		MOVE_BALL_VERTICALLY:
 			mov AX,BALL_VELOCITY_Y
 			add BALL_Y,AX
@@ -396,6 +447,26 @@ CODE SEGMENT PARA 'CODE'
 			
 		RET
 	DRAW_RIGHT_PADDLE ENDP
+	
+	UPDATE_TEXT_P1_POINTS PROC NEAR
+		
+		sub AX,AX
+		mov AL,P1_POINTS
+		add AL,30h
+		mov [TEXT_P1_POINTS],AL
+			
+		RET
+	UPDATE_TEXT_P1_POINTS ENDP
+	
+	UPDATE_TEXT_P2_POINTS PROC NEAR
+	
+		sub AX,AX
+		mov AL,P2_POINTS
+		add AL,30h
+		mov [TEXT_P2_POINTS],AL
+	
+		RET
+	UPDATE_TEXT_P2_POINTS ENDP
 	
 ;end of the code
 CODE ENDS
