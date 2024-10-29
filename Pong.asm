@@ -10,9 +10,21 @@ DATA SEGMENT PARA 'DATA'
 	WINDOW_BOUNDS DW 6
 
 	TIME_AUX DB 0
+	GAME_ACTIVE DB 1
+	EXITING_GAME DB 0
+	WINNER_INDEX DB 0
+	CURRENT_SCENE DB 0
 	
 	TEXT_P1_POINTS DB '0','$'
 	TEXT_P2_POINTS DB '0','$'
+	TEXT_GAME_OVER_TITLE DB 'GAME OVER','$'
+	TEXT_GAME_OVER_WINNER DB 'Player 0 won!','$'
+	TEXT_GAME_OVER_RESET DB 'PLAY AGAIN -> PRESS SPACE','$'
+	TEXT_GAME_OVER_MMENU DB 'MAIN MENU -> PRESS BACKSPACE','$'
+	TEXT_MAIN_MENU DB '8086 PONG','$'
+	TEXT_MAIN_MENU_SINGLE DB 'SINGLEPLAYER -> PRESS SPACE','$'
+	TEXT_MAIN_MENU_MULTI DB 'MULTIPLAYER -> PRESS BACKSPACE','$'
+	TEXT_MAIN_MENU_EXIT DB 'PRESS ESC TO EXIT THE GAME','$'
 
 	BALL_ORIGINAL_X DW 0A0h
 	BALL_ORIGINAL_Y DW 64h
@@ -24,11 +36,13 @@ DATA SEGMENT PARA 'DATA'
 	BALL_VELOCITY_Y DW 02h
 	
 	PADDLE_LEFT_X DW 0Ah
-	PADDLE_LEFT_Y DW 0Ah
+	PADDLE_LEFT_Y DW 55h
+	PADDLE_LEFT_ORG_Y DW 55h
 	P1_POINTS DB 0
 	
 	PADDLE_RIGHT_X DW 132h
-	PADDLE_RIGHT_Y DW 0Ah
+	PADDLE_RIGHT_Y DW 55h
+	PADDLE_RIGHT_ORG_Y DW 55h
 	P2_POINTS DB 0
 	
 	PADDLE_WIDTH DW 04h
@@ -56,7 +70,14 @@ CODE SEGMENT PARA 'CODE'
 		
 	;time check procedure
 		CHECK_TIME:
-		
+			
+			cmp EXITING_GAME,01h
+			je START_EXIT
+			cmp CURRENT_SCENE,00h
+			je SHOW_MAIN_MENU
+			cmp GAME_ACTIVE,00h
+			je SHOW_GAME_OVER
+			
 			mov AH,2Ch
 			int 21h
 			
@@ -78,6 +99,16 @@ CODE SEGMENT PARA 'CODE'
 			
 			jmp CHECK_TIME
 			
+			SHOW_GAME_OVER:
+				call DRAW_GAME_OVER_MENU
+				jmp CHECK_TIME
+				
+			SHOW_MAIN_MENU:
+				call DRAW_MAIN_MENU
+				jmp CHECK_TIME
+			
+			START_EXIT:
+				call FIN_EXIT_GAME
 	
 		RET
 	MAIN ENDP
@@ -109,7 +140,8 @@ CODE SEGMENT PARA 'CODE'
 	
 ;function for reseting the ball position
 	RESET_BALL_POSITION PROC NEAR						;BALL POSITION RESET
-		
+			
+			neg BALL_VELOCITY_X
 			mov AX,BALL_ORIGINAL_X
 			sub AX,BALL_SIZE
 			mov BALL_X,AX
@@ -120,6 +152,17 @@ CODE SEGMENT PARA 'CODE'
 		
 		RET
 	RESET_BALL_POSITION ENDP
+	
+	RESET_PADDLE_POSITION PROC NEAR
+	
+		mov AX,PADDLE_LEFT_ORG_Y
+		mov PADDLE_LEFT_Y,AX
+		
+		mov AX,PADDLE_RIGHT_ORG_Y
+		mov PADDLE_RIGHT_Y,AX
+	
+		RET
+	RESET_PADDLE_POSITION ENDP
 	
 ;function for moving the ball
 	MOVE_BALL PROC NEAR									;BALL MOVEMENT AND COLLISIONS
@@ -155,10 +198,23 @@ CODE SEGMENT PARA 'CODE'
 			RET
 		
 		GAME_OVER:
+			cmp P1_POINTS,05h
+			jnl WINNER_IS_P1
+			jmp WINNER_IS_P2
+			
+			WINNER_IS_P1:
+				mov WINNER_INDEX,01h
+				jmp CONT_GAME_OVER
+			WINNER_IS_P2:
+				mov WINNER_INDEX,02h
+				jmp CONT_GAME_OVER
+		
+			CONT_GAME_OVER:
 			mov P1_POINTS,00h
 			mov P2_POINTS,00h
 			call UPDATE_TEXT_P1_POINTS
 			call UPDATE_TEXT_P2_POINTS
+			mov GAME_ACTIVE,00h
 			RET
 			
 		MOVE_BALL_VERTICALLY:
@@ -361,6 +417,18 @@ CODE SEGMENT PARA 'CODE'
 		RET
 	SET_SCREEN ENDP
 	
+	FIN_EXIT_GAME PROC NEAR
+	
+		mov AH,00h
+		mov AL,03h
+		int 10h
+		
+		mov AH,4Ch
+		int 21h
+		
+		RET
+	FIN_EXIT_GAME ENDP
+	
 ;function for drawing the ball
 	DRAW_BALL PROC NEAR									;DRAWING THE BALL
 	
@@ -467,6 +535,148 @@ CODE SEGMENT PARA 'CODE'
 	
 		RET
 	UPDATE_TEXT_P2_POINTS ENDP
+	
+	DRAW_GAME_OVER_MENU PROC NEAR
+		
+		call RESET_PADDLE_POSITION
+		call SET_SCREEN
+		
+		mov AH,02h
+		mov BH,00h
+		mov DH,04h
+		mov DL,5Ah
+		int 10h
+		
+		call UPDATE_WINNER_TEXT
+		
+		mov AH,09h
+		lea DX,TEXT_GAME_OVER_TITLE
+		int 21h
+		
+		mov AH,02h
+		mov BH,00h
+		mov DH,06h
+		mov DL,5Ah
+		int 10h
+		
+		mov AH,09h
+		lea DX,TEXT_GAME_OVER_WINNER
+		int 21h
+		
+		mov AH,02h
+		mov BH,00h
+		mov DH,08h
+		mov DL,5Ah
+		int 10h
+		
+		mov AH,09h
+		lea DX,TEXT_GAME_OVER_RESET
+ 		int 21h
+		
+		mov AH,02h
+		mov BH,00h
+		mov DH,0Ah
+		mov DL,5Ah
+		int 10h
+		
+		mov AH,09h
+		lea DX,TEXT_GAME_OVER_MMENU
+ 		int 21h
+		
+		mov AH,00h
+		int 16h
+		cmp AL,20h
+		je GAME_RESTART
+		cmp AL,08h
+		je TO_MAIN_MENU
+		
+		GAME_RESTART:
+			mov GAME_ACTIVE,01h
+			RET
+		TO_MAIN_MENU:
+			mov GAME_ACTIVE,00h
+			mov CURRENT_SCENE,00h
+			RET
+			
+	DRAW_GAME_OVER_MENU ENDP
+	
+	UPDATE_WINNER_TEXT PROC NEAR
+		mov AL,WINNER_INDEX
+		add AL,30h
+		mov [TEXT_GAME_OVER_WINNER+7],AL
+		
+		RET
+	UPDATE_WINNER_TEXT ENDP
+	
+	DRAW_MAIN_MENU PROC NEAR
+		
+			call SET_SCREEN
+			
+			mov AH,02h
+			mov BH,00h
+			mov DH,06h
+			mov DL,5Ah
+			int 10h
+			
+			mov AH,09h
+			lea DX,TEXT_MAIN_MENU
+			int 21h
+			
+			mov AH,02h
+			mov BH,00h
+			mov DH,08h
+			mov DL,5Ah
+			int 10h
+			
+			mov AH,09h
+			lea DX,TEXT_MAIN_MENU_SINGLE
+			int 21h
+			
+			mov AH,02h
+			mov BH,00h
+			mov DH,0Ah
+			mov DL,5Ah
+			int 10h
+			
+			mov AH,09h
+			lea DX,TEXT_MAIN_MENU_MULTI
+			int 21h
+			
+			mov AH,02h
+			mov BH,00h
+			mov DH,0Ch
+			mov DL,5Ah
+			int 10h
+			
+			mov AH,09h
+			lea DX,TEXT_MAIN_MENU_EXIT
+			int 21h
+			
+			MAIN_MENU_WFK:
+			mov AH,00h
+			int 16h
+			
+			cmp AL,20h
+			je ENTR_SINGLE
+			cmp AL,08h
+			je ENTR_MULTI
+			cmp AL,1Bh
+			je EXIT_GAME
+			jmp MAIN_MENU_WFK
+			
+			ENTR_SINGLE:
+				mov GAME_ACTIVE,01h
+				mov CURRENT_SCENE,01h
+				
+			ENTR_MULTI:
+				mov GAME_ACTIVE,01h
+				mov CURRENT_SCENE,01h
+				
+			EXIT_GAME:
+				mov EXITING_GAME,01h
+		
+		RET
+	DRAW_MAIN_MENU ENDP
 	
 ;end of the code
 CODE ENDS
