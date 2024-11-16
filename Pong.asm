@@ -21,7 +21,7 @@ DATA SEGMENT PARA 'DATA'
 	TEXT_GAME_OVER_WINNER DB 'Player 0 won!','$'
 	TEXT_GAME_OVER_RESET DB 'PLAY AGAIN -> PRESS SPACE','$'
 	TEXT_GAME_OVER_MMENU DB 'MAIN MENU -> PRESS BACKSPACE','$'
-	TEXT_MAIN_MENU DB '8086 PONG','$'
+	TEXT_MAIN_MENU DB 'Kanamis 8086 PONG!','$'
 	TEXT_MAIN_MENU_SINGLE DB 'SINGLEPLAYER -> PRESS SPACE','$'
 	TEXT_MAIN_MENU_MULTI DB 'MULTIPLAYER -> PRESS BACKSPACE','$'
 	TEXT_MAIN_MENU_EXIT DB 'PRESS ESC TO EXIT THE GAME','$'
@@ -567,7 +567,7 @@ CODE SEGMENT PARA 'CODE'
 		mov AH,02h
 		mov BH,00h
 		mov DH,04h
-		mov DL,5Ah
+		mov DL,5Fh
 		int 10h
 		
 		call UPDATE_WINNER_TEXT
@@ -578,8 +578,8 @@ CODE SEGMENT PARA 'CODE'
 		
 		mov AH,02h
 		mov BH,00h
-		mov DH,06h
-		mov DL,5Ah
+		mov DH,07h
+		mov DL,5Dh
 		int 10h
 		
 		mov AH,09h
@@ -588,8 +588,8 @@ CODE SEGMENT PARA 'CODE'
 		
 		mov AH,02h
 		mov BH,00h
-		mov DH,08h
-		mov DL,5Ah
+		mov DH,0Bh
+		mov DL,07h
 		int 10h
 		
 		mov AH,09h
@@ -598,13 +598,25 @@ CODE SEGMENT PARA 'CODE'
 		
 		mov AH,02h
 		mov BH,00h
-		mov DH,0Ah
-		mov DL,5Ah
+		mov DH,0Dh
+		mov DL,06h
 		int 10h
 		
 		mov AH,09h
 		lea DX,TEXT_GAME_OVER_MMENU
  		int 21h
+		
+		CHECK_FOR_KEY_GO:
+		
+		mov AH,02h
+		mov BH,00h
+		mov DH,11h
+		mov DL,07h
+		int 10h
+			
+		mov AH,09h
+		lea DX,TEXT_MAIN_MENU_EXIT
+		int 21h
 		
 		mov AH,00h
 		int 16h
@@ -612,6 +624,13 @@ CODE SEGMENT PARA 'CODE'
 		je GAME_RESTART
 		cmp AL,08h
 		je TO_MAIN_MENU
+		cmp AL,1Bh
+		je EXIT_GAME_GO
+		
+		jmp CHECK_FOR_KEY_GO
+		
+		EXIT_GAME_GO:
+				mov EXITING_GAME,01h
 		
 		GAME_RESTART:
 			mov GAME_ACTIVE,01h
@@ -638,7 +657,7 @@ CODE SEGMENT PARA 'CODE'
 			mov AH,02h
 			mov BH,00h
 			mov DH,06h
-			mov DL,5Ah
+			mov DL,5Bh
 			int 10h
 			
 			mov AH,09h
@@ -647,8 +666,8 @@ CODE SEGMENT PARA 'CODE'
 			
 			mov AH,02h
 			mov BH,00h
-			mov DH,08h
-			mov DL,5Ah
+			mov DH,0Ah
+			mov DL,06h
 			int 10h
 			
 			mov AH,09h
@@ -657,8 +676,8 @@ CODE SEGMENT PARA 'CODE'
 			
 			mov AH,02h
 			mov BH,00h
-			mov DH,0Ah
-			mov DL,5Ah
+			mov DH,0Ch
+			mov DL,05h
 			int 10h
 			
 			mov AH,09h
@@ -667,8 +686,8 @@ CODE SEGMENT PARA 'CODE'
 			
 			mov AH,02h
 			mov BH,00h
-			mov DH,0Ch
-			mov DL,5Ah
+			mov DH,10h
+			mov DL,07h
 			int 10h
 			
 			mov AH,09h
@@ -691,7 +710,7 @@ CODE SEGMENT PARA 'CODE'
 				mov EXITING_GAME,00h
 				mov GAME_ACTIVE,01h
 				mov CURRENT_SCENE,01h
-				mov AI_CONTROLLED,00h
+				mov AI_CONTROLLED,01h
 				
 				RET
 				
@@ -699,7 +718,7 @@ CODE SEGMENT PARA 'CODE'
 				mov EXITING_GAME,00h
 				mov GAME_ACTIVE,01h
 				mov CURRENT_SCENE,01h
-				mov AI_CONTROLLED,01h
+				mov AI_CONTROLLED,00h
 				
 				RET
 				
