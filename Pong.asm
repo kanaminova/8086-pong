@@ -1,5 +1,5 @@
 STACK SEGMENT PARA STACK
-	DB 64 DUP (' ')
+	DB 64 DUP ('@')
 STACK ENDS
 
 ;data segment v
